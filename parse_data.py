@@ -80,7 +80,7 @@ def main():
     graph = nx.DiGraph()
     process_events(graph)
     process_dbpedia(graph)
-    drawGraph(graph)
+    # drawGraph(graph)
     # serializeGraph(graph)
 
 if __name__ == '__main__':
