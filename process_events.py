@@ -133,7 +133,7 @@ def connectToYAGO(mapping, graph, entityNode):
         ynode = Node(YAGO_ENTITY, mapping[key])
         graph.add_node(ynode)
         graph.add_edge(entityNode, ynode)
-        # print "Linked %s to %s" % (str(entityNode.nodeValue), mapping[key])
+        #print "Linked %s to %s" % (str(entityNode.nodeValue), mapping[key])
 
 # Main function that will be called to run all the code here
 def process_events(graph):

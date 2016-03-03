@@ -2,7 +2,7 @@
 
 EVENTS = 'events/toy_events'
 ENTITIES = 'events/toy_entities'
-ECB_YAGO = 'ecb/json'
+ECB_YAGO = 'ecb/json/'
 OUTPUT = 'output/ecb_graph'
 YAGO_DBPEDIA = 'dbpedia/yago_links.nt'
 DBPEDIA = 'dbpedia/mappingbased-properties_en.nt'

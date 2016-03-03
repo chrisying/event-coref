@@ -4,8 +4,8 @@ import os
 
 import numpy as np
 
-DIR = 'ecb/txt/'
-CLUSTERS = 1
+DIR = 'ecb/annotations/'
+CLUSTERS = 2
 
 class Cluster:
     def __init__(self, name, vector):
@@ -18,7 +18,7 @@ class Cluster:
     def __str__(self):
         if self.dirty:
             self.update()
-        return '(Cluster: %s; Centroid: %s)' % (str(self.cluster), str(self.centroid))
+        return 'Cluster(%s)' % str(self.cluster)
 
     def combine(self, other):
         self.cluster += other.cluster
@@ -45,24 +45,27 @@ def main():
     # First pass to get term dictionary
     for filename in os.listdir(DIR):
         with open(DIR + filename) as f:
-            for line in f.xreadlines():
-                for word in line.split():
-                    if word not in dictionary:
-                        dictionary[word] = counter
-                        counter += 1
+            data = eval(f.read())
+            for annotation in data['annotations']:
+                name = annotation['enUrl']
+                if name not in dictionary:
+                    dictionary[name] = counter
+                    counter += 1
 
 
     # Second pass to create vectors
     for filename in os.listdir(DIR):
         vector = np.zeros(counter)
         with open(DIR + filename) as f:
-            for line in f.xreadlines():
-                for word in line.split():
-                    vector[dictionary[word]] = 1
+            data = eval(f.read())
+            for annotation in data['annotations']:
+                name = annotation['enUrl']
+                vector[dictionary[name]] = 1
 
         events.append((filename, vector))
 
     clusters = [Cluster(filename, vector) for (filename, vector) in events]
+    print [str(c) for c in clusters]
     numClusters = len(events)
     while (numClusters > CLUSTERS):
         minPair = None
@@ -80,6 +83,7 @@ def main():
         clusters[i].combine(clusters[j])
         clusters = clusters[:j] + clusters[j+1:]
         numClusters -= 1
+    print [str(c) for c in clusters]
 
 
 if __name__ == '__main__':

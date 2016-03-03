@@ -7,16 +7,27 @@ import networkx as nx
 from node import Node
 from constants import *
 
+DBPEDIA_PREFIX = 'http://dbpedia.org'
+
 # Covert "YAGO:Entity" to URL that DBpedia expects
 def convertYAGOToURL(yago):
     entity = yago.split(':')[1].decode('unicode-escape')
     return 'http://yago-knowledge.org/resource/%s' % entity
 
-def parseDBpediaLine(line):
+def parseDBpediaYAGO(line):
     toks = line.split()
     src = toks[0][1:-1]
     dst = toks[2][1:-1]
     return (src, dst)
+
+def parseDBpediaLine(line):
+    toks = line.split()
+    src = toks[0][1:-1]
+    rel = toks[1][1:-1]
+    dst = toks[2][1:-1]
+    if not (src.startswith(DBPEDIA_PREFIX) and rel.startswith(DBPEDIA_PREFIX) and dst.startswith(DBPEDIA_PREFIX)):
+        return None
+    return (src, rel, dst)
 
 # Main process being called from main
 def process_dbpedia(graph):
@@ -32,7 +43,7 @@ def process_dbpedia(graph):
     with open(YAGO_DBPEDIA, 'r') as f:
         f.readline()    # First line is a comment
         for line in f.xreadlines():
-            (src, dst) = parseDBpediaLine(line) # src is DBpedia URL
+            (src, dst) = parseDBpediaYAGO(line) # src is DBpedia URL
             if dst in mapping:
                 dnode = Node(DB_ENTITY, src)  # May exist already
                 graph.add_node(dnode)
@@ -48,25 +59,29 @@ def process_dbpedia(graph):
         with open(DBPEDIA, 'r') as f:   # Stream through DBpedia
             f.readline()    # First line is a comment
             for line in f.xreadlines():
-                (src, dst) = parseDBpediaLine(line)
-                # Treating (src, dst) as bidirectional
+                nodes = parseDBpediaLine(line)
+                if not nodes:
+                    continue
+                (src, rel, dst) = (nodes[0], nodes[1], nodes[2])
                 if src in frontier:
                     dnode = Node(DB_ENTITY, dst)    # May exist already
                     graph.add_node(dnode)
                     graph.add_edge(frontier[src], dnode)
+                    #print 'linked %s to %s by %s' % (frontier[src].nodeValue, dnode.nodeValue, rel)
                     counter += 1
                     if dst not in visited:
                         visited.add(dst)
                         newFrontier[dst] = dnode
 
-                if dst in frontier:
-                    dnode = Node(DB_ENTITY, src)    # May exist already
-                    graph.add_node(dnode)
-                    graph.add_edge(frontier[dst], dnode)
-                    counter += 1
-                    if src not in visited:
-                        visited.add(src)
-                        newFrontier[src] = dnode
+                #if dst in frontier:
+                #    dnode = Node(DB_ENTITY, src)    # May exist already
+                #    graph.add_node(dnode)
+                #    graph.add_edge(frontier[dst], dnode)
+                #    print 'linked %s to %s by %s' % (frontier[dst].nodeValue, dnode.nodeValue, rel)
+                #    counter += 1
+                #    if src not in visited:
+                #        visited.add(src)
+                #        newFrontier[src] = dnode
 
         # Ideally free old frontier here?
         frontier = newFrontier
