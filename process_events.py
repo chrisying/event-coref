@@ -1,6 +1,7 @@
 # Parses the documents in events/ and adds it to the graph, then links
 # the entities to YAGO entities
 import json
+import logging
 
 import networkx as nx
 
@@ -30,6 +31,7 @@ def process_entities(fentities, curDoc, entities):
 
 # Put doc, events, entities into graph with edges
 def process_doc(graph, doc, events, entities):
+    logging.debug('Processing document %s' % doc)
     if not doc:
         return
 
@@ -86,6 +88,7 @@ def process_doc(graph, doc, events, entities):
 # Reads the data in the appropriate file once and returns a dict of
 # (sentence num, token num) -> YAGO entity
 def loadYAGO(doc):
+    logging.debug('Loading %s into JSON' % doc)
     with open(ECB_YAGO + doc + '.txt.json', 'r') as f:
         data = json.loads(f.readline())
         # Pretty-print the data
@@ -134,6 +137,7 @@ def connectToYAGO(mapping, graph, entityNode):
 
 # Main function that will be called to run all the code here
 def process_events(graph):
+    logging.debug('Starting processing events and entities from AIDA')
     curDoc = ''
     events = []
     entities = []

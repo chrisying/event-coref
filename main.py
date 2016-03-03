@@ -2,6 +2,7 @@
 # single networkx graph
 
 import json
+import logging
 
 import networkx as nx
 import matplotlib.pylab as plt
@@ -13,6 +14,7 @@ from process_dbpedia import process_dbpedia
 
 # Visualizes grpah with matplotlib
 def drawGraph(graph):
+    logging.debug('Drawing graph')
     labs = {}
     pos = {}
     SPACE = 1
@@ -65,6 +67,7 @@ def drawGraph(graph):
 
 # Writes graph to file
 def serializeGraph(graph):
+    logging.debug('Serializing graph')
     nodes = map(lambda n:"%s\t%s\n" % (n.nodeType, n.nodeValue), graph.nodes())
     edges = map(lambda (n1, n2):"%s\t%s\t%s\t%s\n" % (n1.nodeType, n1.nodeValue, n2.nodeType, n2.nodeValue), graph.edges())
     with open(OUTPUT, 'w') as f:
@@ -73,6 +76,7 @@ def serializeGraph(graph):
         f.writelines(edges)
 
 def main():
+    logging.basicConfig(level=logging.DEBUG)
     graph = nx.DiGraph()
     process_events(graph)
     process_dbpedia(graph)
