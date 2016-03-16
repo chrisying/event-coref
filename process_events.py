@@ -31,9 +31,9 @@ def process_entities(fentities, curDoc, entities):
 
 # Put doc, events, entities into graph with edges
 def process_doc(graph, doc, events, entities):
-    logging.debug('Processing document %s' % doc)
     if not doc:
         return
+    logging.debug('Processing document %s' % doc)
 
     docNode = Node(DOC, doc)
     graph.add_node(docNode)

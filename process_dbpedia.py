@@ -7,8 +7,6 @@ import networkx as nx
 from node import Node
 from constants import *
 
-DBPEDIA_PREFIX = 'http://dbpedia.org'
-
 # Covert "YAGO:Entity" to URL that DBpedia expects
 def convertYAGOToURL(yago):
     entity = yago.split(':')[1].decode('unicode-escape')
@@ -20,7 +18,7 @@ def parseDBpediaYAGO(line):
     dst = toks[2][1:-1]
     return (src, dst)
 
-def parseDBpediaLine(line):
+def parseDBpediaRel(line):
     toks = line.split()
     src = toks[0][1:-1]
     rel = toks[1][1:-1]
@@ -53,13 +51,13 @@ def process_dbpedia(graph):
                 # print "Mapped %s to %s" % (mapping[src].nodeValue, dnode.nodeValue)
 
     newFrontier = {}
-    for i in range(DEPTH): # Traverse DEPTH entities deep into DBpedia;w
+    for i in range(DEPTH): # Traverse DEPTH entities deep into DBpedia
         logging.debug('Starting traversal of DBpedia, level %d of %d' % (i+1, DEPTH))
         counter = 0
         with open(DBPEDIA, 'r') as f:   # Stream through DBpedia
             f.readline()    # First line is a comment
             for line in f.xreadlines():
-                nodes = parseDBpediaLine(line)
+                nodes = parseDBpediaRel(line)
                 if not nodes:
                     continue
                 (src, rel, dst) = (nodes[0], nodes[1], nodes[2])
@@ -72,16 +70,6 @@ def process_dbpedia(graph):
                     if dst not in visited:
                         visited.add(dst)
                         newFrontier[dst] = dnode
-
-                #if dst in frontier:
-                #    dnode = Node(DB_ENTITY, src)    # May exist already
-                #    graph.add_node(dnode)
-                #    graph.add_edge(frontier[dst], dnode)
-                #    print 'linked %s to %s by %s' % (frontier[dst].nodeValue, dnode.nodeValue, rel)
-                #    counter += 1
-                #    if src not in visited:
-                #        visited.add(src)
-                #        newFrontier[src] = dnode
 
         # Ideally free old frontier here?
         frontier = newFrontier

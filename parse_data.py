@@ -65,14 +65,16 @@ def drawGraph(graph):
     nx.draw_networkx_edges(graph, pos=pos, arrows=False)
     plt.show()
 
-# Writes graph to file
+# Writes graph to file as an edge list
 def serializeGraph(graph):
     logging.debug('Serializing graph')
-    nodes = map(lambda n:"%s\t%s\n" % (n.nodeType, n.nodeValue), graph.nodes())
-    edges = map(lambda (n1, n2):"%s\t%s\t%s\t%s\n" % (n1.nodeType, n1.nodeValue, n2.nodeType, n2.nodeValue), graph.edges())
-    with open(OUTPUT, 'w') as f:
-        f.write('%d\t%d\n' % (len(nodes), len(edges)))
-        f.writelines(nodes)
+    #nodes = map(lambda n:"%s\t%s\n" % (n.nodeType, n.nodeValue), graph.nodes())
+    #edges = map(lambda (n1, n2):"%s\t%s\t%s\t%s\n" % (n1.nodeType, n1.nodeValue, n2.nodeType, n2.nodeValue), graph.edges())
+    edges = map(lambda e:'%s\n' % repr(e), graph.edges())
+    with open(GRAPH_OUTPUT, 'w') as f:
+        #f.write('%d\t%d\n' % (len(nodes), len(edges)))
+        f.write('%d\n' % len(edges))
+        #f.writelines(nodes)
         f.writelines(edges)
 
 def main():
@@ -81,7 +83,7 @@ def main():
     process_events(graph)
     process_dbpedia(graph)
     # drawGraph(graph)
-    # serializeGraph(graph)
+    serializeGraph(graph)
 
 if __name__ == '__main__':
     main()

@@ -4,47 +4,16 @@ import os
 
 import numpy as np
 
-DIR = 'ecb/annotations/'
-CLUSTERS = 2
-
-class Cluster:
-    def __init__(self, name, vector):
-        self.cluster = [name]
-        self.centroid = vector
-        self.dirty = False      # true after a combine but before an update
-        self.sumv = vector
-        self.numv = 1
-
-    def __str__(self):
-        if self.dirty:
-            self.update()
-        return 'Cluster(%s)' % str(self.cluster)
-
-    def combine(self, other):
-        self.cluster += other.cluster
-        self.dirty = True
-        self.sumv += other.sumv
-        self.numv += other.numv
-
-    def update(self):
-        self.centroid = self.sumv / self.numv
-        self.dirty = False
-
-    def distance(self, other):
-        if self.dirty:
-            self.update()
-
-        # Currently Euclidean distance
-        dif = self.centroid - other.centroid
-        return np.dot(dif, dif)
+from cluster import Cluster
+from constants import *
 
 def main():
     events = []
     dictionary = {}
     counter = 0
     # First pass to get term dictionary
-    for filename in os.listdir(DIR):
-        with open(DIR + filename) as f:
+    for filename in os.listdir(ANNOTATION_DIR):
+        with open(ANNOTATION_DIR + filename) as f:
             data = eval(f.read())
             for annotation in data['annotations']:
                 name = annotation['enUrl']
@@ -54,9 +23,9 @@ def main():
 
 
     # Second pass to create vectors
-    for filename in os.listdir(DIR):
+    for filename in os.listdir(ANNOTATION_DIR):
         vector = np.zeros(counter)
-        with open(DIR + filename) as f:
+        with open(ANNOTATION_DIR + filename) as f:
             data = eval(f.read())
             for annotation in data['annotations']:
                 name = annotation['enUrl']
@@ -67,15 +36,15 @@ def main():
     clusters = [Cluster(filename, vector) for (filename, vector) in events]
     print [str(c) for c in clusters]
     numClusters = len(events)
-    while (numClusters > CLUSTERS):
+    while (numClusters > NUM_CLUSTERS):
         minPair = None
-        minDist = 2**31 - 1     # A large number
+        minDist = -1
         for i in range(len(clusters)):
             for j in range(i+1, len(clusters)):
                 c1 = clusters[i]
                 c2 = clusters[j]
                 dist = c1.distance(c2)
-                if dist < minDist:
+                if (dist < minDist or minDist == -1):
                     minDist = dist
                     minPair = (i, j)
 
