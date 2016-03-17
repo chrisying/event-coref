@@ -34,6 +34,6 @@ class Cluster:
         dif = ssd.cosine(self.centroid, other.centroid)
         return dif
 
-    def cluster(self):
+    def getCluster(self):
         return self.cluster
 

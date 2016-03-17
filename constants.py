@@ -1,7 +1,7 @@
 # Constants
 
-EVENTS = 'events/train_event_crf_result'
-ENTITIES = 'events/train_entity_crf_result'
+EVENTS = 'events/toy_events'
+ENTITIES = 'events/toy_entities'
 ECB_YAGO = 'ecb/json/'
 GRAPH_OUTPUT = 'output/data_graph'
 YAGO_DBPEDIA = 'dbpedia/yago_links.nt'

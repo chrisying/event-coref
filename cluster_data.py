@@ -86,8 +86,8 @@ def clusterDictionary(eventNodes, clusters):
 
     c = 0
     for cl in clusters:
-        for event in cl.cluster():
-            eventCluster[event] = c
+        for event in cl.getCluster():
+            eventClusters[event] = c
         c += 1
     return eventClusters
 

@@ -61,7 +61,7 @@ def main():
 
     c = 0
     for cl in clusters:
-        for event in cl.cluster():
+        for event in cl.getCluster():
             eventCluster[event] = c
         c += 1
 
