@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.spatial.distance as ssd
 
 class Cluster:
     def __init__(self, name, vector):
@@ -27,7 +28,12 @@ class Cluster:
         if self.dirty:
             self.update()
 
-        # Currently Euclidean distance
-        dif = self.centroid - other.centroid
-        return np.dot(dif, dif)
+        # Euclidean distance
+        # dif = self.centroid - other.centroid
+        # Cosine distance
+        dif = ssd.cosine(self.centroid, other.centroid)
+        return dif
+
+    def cluster(self):
+        return self.cluster
 
