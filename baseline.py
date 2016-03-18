@@ -32,14 +32,14 @@ def main():
             indptr.append(len(indices))
 
     feature_matrix = csr_matrix((data, indices, indptr), dtype=int)
-    connectivity = kneighbors_graph(feature_matrix, n_neighbors=2, include_self=False)
+    connectivity = kneighbors_graph(feature_matrix, n_neighbors=10, include_self=False)
     connectivity = 0.5 * (connectivity + connectivity.T)
 
     best_nc = -1
     best_acc = -1
     best_labels = None
 
-    for nc in range(45, 200):
+    for nc in range(45, 300):
         algo = AgglomerativeClustering(n_clusters=nc, linkage='ward', connectivity=connectivity)
         pred_labels = algo.fit_predict(feature_matrix.toarray())
         accuracy = adjusted_rand_score(true_labels, pred_labels)
