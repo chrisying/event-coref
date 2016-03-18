@@ -34,9 +34,20 @@ def main():
     feature_matrix = csr_matrix((data, indices, indptr), dtype=int)
     connectivity = kneighbors_graph(feature_matrix, n_neighbors=2, include_self=False)
     connectivity = 0.5 * (connectivity + connectivity.T)
-    algo = AgglomerativeClustering(n_clusters=2, linkage='ward', connectivity=connectivity)
-    pred_labels = algo.fit_predict(feature_matrix.toarray())
-    accuracy = adjusted_rand_score(true_labels, pred_labels)
+
+    best_nc = -1
+    best_acc = -1
+    best_labels = None
+
+    for nc in range(45, 200):
+        algo = AgglomerativeClustering(n_clusters=nc, linkage='ward', connectivity=connectivity)
+        pred_labels = algo.fit_predict(feature_matrix.toarray())
+        accuracy = adjusted_rand_score(true_labels, pred_labels)
+        print 'Num clusters: %d\t\tScore: %.5f' % (nc, accuracy)
+        if accuracy > best_acc:
+            best_nc = nc
+            best_acc = accuracy
+            best_labels = pred_labels
 
     '''
     events = []
@@ -105,12 +116,16 @@ def main():
 
     score = adjusted_rand_score(true, pred)
     print 'Score: %d/1.0' % score
+    '''
 
     with open(BASELINE_CLUSTER_OUTPUT, 'w') as f:
-        f.write('Score: %f\n' % score)
-        for event in eventCluster:
-            f.write('%d\t%s\n' % (eventCluster[event], event))
-    '''
+        f.write('Best number of clusters: %d\t\tScore: %f\n' % (best_nc, best_acc))
+        i = 0
+        for filename in os.listdir(ANNOTATION_DIR):
+            f.write('%d\t%s\n' % (best_labels[i], filename))
+            i += 1
+        #for event in eventCluster:
+        #    f.write('%d\t%s\n' % (eventCluster[event], event))
 
 if __name__ == '__main__':
     main()
