@@ -66,10 +66,10 @@ def extractFeatures(graph, eventNodes):
         indptr.append(len(indices))
 
     feature_matrix = csr_matrix((data, indices, indptr), dtype=int)
-    return feature_matrix
+    return (feature_matrix, true_labels)
 
 # Does basic agglomerative clustering
-def cluster(feature_matrix):
+def cluster(feature_matrix, true_labels):
     connectivity = kneighbors_graph(feature_matrix, n_neighbors=10, include_self=False)
     connectivity = 0.5 * (connectivity + connectivity.T)
 
@@ -155,9 +155,9 @@ def main():
     #logging.debug('Computing dictionary')
     #(dictionary, count) = computeDictionary(graph, eventNodes)
     logging.debug('Extracting features')
-    feature_matrix = extractFeatures(graph, eventNodes)
+    (feature_matrix, true_labels) = extractFeatures(graph, eventNodes)
     logging.debug('Clustering')
-    (nc, acc, labels) = cluster(feature_matrix)
+    (nc, acc, labels) = cluster(feature_matrix, true_labels)
 
     #logging.debug('Computing cluster dictionary')
     #eventClusters = clusterDictionary(eventNodes, clusters)
