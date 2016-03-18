@@ -2,13 +2,43 @@
 
 import os
 
-import numpy as np
-from sklearn import metrics
+from scipy.sparse import csr_matrix
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.metrics import adjusted_rand_score
+from sklearn.neighbors import kneighbors_graph
 
 from cluster import Cluster
 from constants import *
 
 def main():
+
+    indptr = [0]
+    indices = []
+    data = []
+    vocabulary = {}
+    true_labels = []
+    for filename in os.listdir(ANNOTATION_DIR):
+        with open(ANNOTATION_DIR + filename) as f:
+            fdata = eval(f.read())
+            if (filename.endswith('plus.xml.txt')):
+                true_labels.append(-1 * int(filename.split('_')[0]))
+            else:
+                true_labels.append(int(filename.split('_')[0]))
+            for annotation in fdata['annotations']:
+                entity = annotation['enUrl']
+                index = vocabulary.setdefault(entity, len(vocabulary))
+                indices.append(index)
+                data.append(1)
+            indptr.append(len(indices))
+
+    feature_matrix = csr_matrix((data, indices, indptr), dtype=int)
+    connectivity = kneighbors_graph(feature_matrix, n_neighbors=2, include_self=False)
+    connectivity = 0.5 * (connectivity + connectivity.T)
+    algo = AgglomerativeClustering(n_clusters=2, linkage='ward', connectivity=connectivity)
+    pred_labels = algo.fit_predict(feature_matrix.toarray())
+    accuracy = adjusted_rand_score(true_labels, pred_labels)
+
+    '''
     events = []
     dictionary = {}
     counter = 0
@@ -73,13 +103,14 @@ def main():
         pred.append(eventCluster[event])
         true.append(int(event.split('_')[0]))
 
-    score = metrics.adjusted_rand_score(true, pred)
+    score = adjusted_rand_score(true, pred)
     print 'Score: %d/1.0' % score
 
     with open(BASELINE_CLUSTER_OUTPUT, 'w') as f:
         f.write('Score: %f\n' % score)
         for event in eventCluster:
             f.write('%d\t%s\n' % (eventCluster[event], event))
+    '''
 
 if __name__ == '__main__':
     main()
