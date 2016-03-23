@@ -52,7 +52,7 @@ def extractFeatures(graph, eventNodes):
     vocabulary = {}
     true_labels = []
     for node in eventNodes:
-        if (node.nodeValue.endswith('plus.xml.txt')):
+        if (node.nodeValue.endswith('plus.xml')):
             true_labels.append(-1 * int(node.nodeValue.split('_')[0]))
         else:
             true_labels.append(int(node.nodeValue.split('_')[0]))
@@ -70,14 +70,15 @@ def extractFeatures(graph, eventNodes):
 
 # Does basic agglomerative clustering
 def cluster(feature_matrix, true_labels):
-    connectivity = kneighbors_graph(feature_matrix, n_neighbors=10, include_self=False)
+    connectivity = kneighbors_graph(feature_matrix, n_neighbors=1, include_self=False)
     connectivity = 0.5 * (connectivity + connectivity.T)
 
     best_nc = -1
     best_acc = -1
     best_labels = None
 
-    for nc in range(45, 300):
+    #for nc in range(45, 300):
+    for nc in range(1, 2):
         algo = AgglomerativeClustering(n_clusters=nc, linkage='ward', connectivity=connectivity)
         pred_labels = algo.fit_predict(feature_matrix.toarray())
         accuracy = adjusted_rand_score(true_labels, pred_labels)
