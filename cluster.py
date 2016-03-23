@@ -1,39 +1,32 @@
 import numpy as np
-import scipy.spatial.distance as ssd
 
 class Cluster:
     def __init__(self, name, vector):
-        self.cluster = [name]
-        self.centroid = vector
-        self.dirty = False      # true after a combine but before an update
-        self.sumv = vector
-        self.numv = 1
+        # Vector is a csr_matrix (1 x n)
+        self.names = [name]
+        self.vectors = [vector]
 
     def __str__(self):
-        if self.dirty:
-            self.update()
-        return 'Cluster(%s)' % str(self.cluster)
+        return 'Cluster(%s)' % str(self.names)
 
     def combine(self, other):
-        self.cluster += other.cluster
-        self.dirty = True
-        self.sumv += other.sumv
-        self.numv += other.numv
-
-    def update(self):
-        self.centroid = self.sumv / self.numv
-        self.dirty = False
+        self.names += other.names
+        self.vectors += other.vectors
 
     def distance(self, other):
-        if self.dirty:
-            self.update()
+        # Cosine distance of min link
+        mindist = -1
+        for v1 in self.vectors:
+            for v2 in other.vectors:
+                dt = v1.dot(v2.transpose())
+                n1 = v1.dot(v1.transpose())
+                n2 = v2.dot(v2.transpose())
+                dif = 1.0 - dt.data[0] / (np.sqrt(n1) * np.sqrt(n2)).data[0]
+                if dif < mindist or mindist == -1:
+                    mindist = dif
 
-        # Euclidean distance
-        # dif = self.centroid - other.centroid
-        # Cosine distance
-        dif = ssd.cosine(self.centroid, other.centroid)
-        return dif
+        return mindist
 
     def getCluster(self):
-        return self.cluster
+        return self.names
 
