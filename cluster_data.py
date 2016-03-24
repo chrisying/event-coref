@@ -90,7 +90,7 @@ def cluster(feature_matrix, names):
             for name in c.names:
                 names.append(name)
                 trueSame.append(int(name.split('_')[0]))
-                if name.endswith('plus.xml.txt'):
+                if name.endswith('plus.xml'):
                     trueDiff.append(-1 * int(name.split('_')[0]))
                 else:
                     trueDiff.append(int(name.split('_')[0]))
