@@ -34,11 +34,11 @@ def main():
 
     # print [str(c) for c in clusters]
     numClusters = len(clusters)
-    bestScore = -1
+    bestScoreDiff = -1   # Treats ecb and ecb plus different
+    bestScoreSame = -1   # Treats ecb and ecb plus same
     bestNumClusters = -1
     bestClusters = []
     while numClusters > 1:
-        print 'Current number of clusters: %d' % (numClusters)
         minPair = None
         minDist = -1
         for i in xrange(numClusters):
@@ -56,28 +56,32 @@ def main():
         numClusters -= 1
 
         pred = []
-        true = []
+        trueSame = []
+        trueDiff = []
         cnum = 0
         names = []
         for c in clusters:
             pred += [cnum] * len(c.names)
             for name in c.names:
                 names.append(name)
+                trueSame.append(int(name.split('_')[0]))
                 if name.endswith('plus.xml.txt'):
-                    true.append(-1 * int(name.split('_')[0]))
+                    trueDiff.append(-1 * int(name.split('_')[0]))
                 else:
-                    true.append(int(name.split('_')[0]))
+                    trueDiff.append(int(name.split('_')[0]))
             cnum += 1
 
-        score = adjusted_rand_score(true, pred)
-        print 'Score: %.5f' % score
-        if score > bestScore:
-            bestScore = score
+        scoreSame = adjusted_rand_score(trueSame, pred)
+        scoreDiff = adjusted_rand_score(trueDiff, pred)
+        print 'Num clusters: %d\t\tScore (same): %.5f\t\tScore (diff): %.5f' % (numClusters, scoreSame, scoreDiff)
+        if  scoreDiff > bestScoreDiff:   # Uses different as the final metric
+            bestScoreSame = scoreSame
+            bestScoreDiff = scoreDiff
             bestNumClusters = numClusters
             bestClusters = zip(names, pred)
 
     with open(BASELINE_CLUSTER_OUTPUT, 'w') as f:
-        f.write('Best number of clusters: %d\t\tScore: %f\n' % (bestNumClusters, bestScore))
+        f.write('Best number of clusters: %d\t\tScore (same): %.5f\t\tScore (diff): %.5f\n' % (bestNumClusters, bestScoreSame, bestScoreDiff))
         for (name, clust) in bestClusters:
             f.write('%d\t%s\n' % (clust, name))
 

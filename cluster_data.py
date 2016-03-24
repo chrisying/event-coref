@@ -31,32 +31,15 @@ def getEventNodes(graph):
             nodes.append(node)
     return nodes
 
-# Computes feature (aka entity name) -> index dict
-def computeDictionary(graph, eventNodes):
-    dictionary = {}
-    counter = 0
-    for node in eventNodes:
-        desc = nx.descendants(graph, node)
-        for d in desc:
-            if d.nodeType == YAGO_ENTITY or d.nodeType == DB_ENTITY:
-                if d.nodeValue not in dictionary:
-                    dictionary[d.nodeValue] = counter
-                    counter += 1
-    return (dictionary, counter)
-
 # Returns a matrix of features, one row per event
 def extractFeatures(graph, eventNodes):
     indptr = [0]
     indices = []
     data = []
     vocabulary = {}
-    true_labels = []
+    names = []
     for node in eventNodes:
-        if (node.nodeValue.endswith('plus.xml')):
-            true_labels.append(-1 * int(node.nodeValue.split('_')[0]))
-        else:
-            true_labels.append(int(node.nodeValue.split('_')[0]))
-
+        names.append(node.nodeValue)
         desc = nx.descendants(graph, node)
         for d in desc:
             if d.nodeType == YAGO_ENTITY or d.nodeType == DB_ENTITY:
@@ -66,85 +49,68 @@ def extractFeatures(graph, eventNodes):
         indptr.append(len(indices))
 
     feature_matrix = csr_matrix((data, indices, indptr), dtype=int)
-    return (feature_matrix, true_labels)
+    return (feature_matrix, names)
 
 # Does basic agglomerative clustering
-def cluster(feature_matrix, true_labels):
-    connectivity = kneighbors_graph(feature_matrix, n_neighbors=10, include_self=False)
-    connectivity = 0.5 * (connectivity + connectivity.T)
+def cluster(feature_matrix, names):
+    clusters = []
+    for row in xrange(feature_matrix.shape[0]):
+        clusters.append(Cluster(names[row], feature_matrix.getrow(row)))
 
-    best_nc = -1
-    best_acc = -1
-    best_labels = None
-
-    for nc in range(45, 300):
-        algo = AgglomerativeClustering(n_clusters=nc, linkage='ward', connectivity=connectivity)
-        pred_labels = algo.fit_predict(feature_matrix.toarray())
-        accuracy = adjusted_rand_score(true_labels, pred_labels)
-        print 'Num clusters: %d\t\tScore: %.5f' % (nc, accuracy)
-        if accuracy > best_acc:
-            best_nc = nc
-            best_acc = accuracy
-            best_labels = pred_labels
-
-    return (best_nc, best_acc, best_labels)
-
-    '''
-    clusters = [Cluster(name, vector) for (name, vector) in eventFeatures]
-    numClusters = len(eventFeatures)
-
-    while (numClusters > NUM_CLUSTERS):
-        logging.debug('Current number of clusters: %d' % numClusters)
+    # print [str(c) for c in clusters]
+    numClusters = len(clusters)
+    bestScoreDiff = -1   # Treats ecb and ecb plus different
+    bestScoreSame = -1   # Treats ecb and ecb plus same
+    bestNumClusters = -1
+    bestClusters = []
+    while numClusters > 1:
         minPair = None
         minDist = -1
-        for i in range(len(clusters)):
-            for j in range(i+1, len(clusters)):
+        for i in xrange(numClusters):
+            for j in xrange(i+1, numClusters):
                 c1 = clusters[i]
                 c2 = clusters[j]
                 dist = c1.distance(c2)
                 if (dist < minDist or minDist == -1):
                     minDist = dist
                     minPair = (i, j)
+
         (i,j) = (minPair[0], minPair[1])
         clusters[i].combine(clusters[j])
         clusters = clusters[:j] + clusters[j+1:]
         numClusters -= 1
 
-    return clusters
-    '''
+        pred = []
+        trueSame = []
+        trueDiff = []
+        cnum = 0
+        names = []
+        for c in clusters:
+            pred += [cnum] * len(c.names)
+            for name in c.names:
+                names.append(name)
+                trueSame.append(int(name.split('_')[0]))
+                if name.endswith('plus.xml.txt'):
+                    trueDiff.append(-1 * int(name.split('_')[0]))
+                else:
+                    trueDiff.append(int(name.split('_')[0]))
+            cnum += 1
 
-'''
-def clusterDictionary(eventNodes, clusters):
-    eventClusters = {}
-    for n in eventNodes:
-        eventClusters[n.nodeValue] = 0
+        scoreSame = adjusted_rand_score(trueSame, pred)
+        scoreDiff = adjusted_rand_score(trueDiff, pred)
+        logging.debug('Num clusters: %d\t\tScore (same): %.5f\t\tScore (diff): %.5f' % (numClusters, scoreSame, scoreDiff))
+        if  scoreDiff > bestScoreDiff:   # Uses different as the final metric
+            bestScoreSame = scoreSame
+            bestScoreDiff = scoreDiff
+            bestNumClusters = numClusters
+            bestClusters = zip(names, pred)
+    return (bestScoreSame, bestScoreDiff, bestNumClusters, bestClusters)
 
-    c = 0
-    for cl in clusters:
-        for event in cl.getCluster():
-            eventClusters[event] = c
-        c += 1
-    return eventClusters
-
-def evaluateAccuracy(eventClusters):
-    pred = []
-    true = []
-    for event in eventClusters:
-        pred.append(eventClusters[event])
-        true.append(int(event.split('_')[0]))
-
-    score = metrics.adjusted_rand_score(true, pred)
-    print 'Score: %d/1.0' % score
-    return score
-'''
-
-def writeToFile(nc, acc, labels, eventNodes):
+def writeToFile(bnc, bss, bsd, bc):
     with open(GRAPH_CLUSTER_OUTPUT, 'w') as f:
-        f.write('Best number of clusters: %d\t\tScore: %f\n' % (nc, acc))
-        i = 0
-        for node in eventNodes:
-            f.write('%d\t%s\n' % (labels[i], node.nodeValue))
-            i += 1
+        f.write('Best number of clusters: %d\tScore (same): %.5f\tScore (diff): %.5f\n' % (bnc, bss, bsd))
+        for (name, clust) in bc:
+            f.write('%d\t%s\n' % (clust, name))
 
 def main():
     logging.basicConfig(level=logging.DEBUG)
@@ -152,19 +118,12 @@ def main():
     graph = deserializeGraph(GRAPH_OUTPUT)
     logging.debug('Getting event nodes')
     eventNodes = getEventNodes(graph)
-    #logging.debug('Computing dictionary')
-    #(dictionary, count) = computeDictionary(graph, eventNodes)
     logging.debug('Extracting features')
-    (feature_matrix, true_labels) = extractFeatures(graph, eventNodes)
+    (feature_matrix, names) = extractFeatures(graph, eventNodes)
     logging.debug('Clustering')
-    (nc, acc, labels) = cluster(feature_matrix, true_labels)
-
-    #logging.debug('Computing cluster dictionary')
-    #eventClusters = clusterDictionary(eventNodes, clusters)
-    #logging.debug('Evaluating clusters')
-    #score = evaluateAccuracy(eventClusters)
+    (bss, bsd, bnc, bc) = cluster(feature_matrix, names)
     logging.debug('Writing clusters to file')
-    writeToFile(nc, acc, labels, eventNodes)
+    writeToFile(bss, bsd, bnc, bc)
 
 if __name__ == '__main__':
     main()
