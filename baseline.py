@@ -27,6 +27,12 @@ def main():
             indptr.append(len(indices))
 
     feature_matrix = csr_matrix((data, indices, indptr), dtype=int)
+    with open('baseline_feature_matrix', 'w') as f:
+        for i in range(feature_matrix.shape[0]):
+            f.write('%s ' % names[i])
+            for b in feature_matrix.getrow(i).toarray()[0]:
+                f.write('%d ' % b)
+            f.write('\n')
 
     (best_same, best_diff, best_num, best_cluster) = ClusterByUFS(feature_matrix, names)
     print 'Best number of clusters: %d\tScore (same): %.5f\tScore (diff): %.5f' % (best_num, best_same, best_diff)

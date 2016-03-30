@@ -51,7 +51,7 @@ def extractFeatures(graph, eventNodes):
         indptr.append(len(indices))
 
     feature_matrix = csr_matrix((data, indices, indptr), dtype=int)
-    with open('feature_matrix', 'w') as f:
+    with open('graph_feature_matrix', 'w') as f:
         for i in range(feature_matrix.shape[0]):
             f.write('%s ' % names[i])
             for b in feature_matrix.getrow(i).toarray()[0]:
