@@ -8,7 +8,7 @@ from sklearn.neighbors import kneighbors_graph
 
 from constants import *
 from node import Node
-from cluster import Cluster
+from cluster import ClusterByUFS
 
 import logging
 
@@ -53,63 +53,12 @@ def extractFeatures(graph, eventNodes):
 
 # Does basic agglomerative clustering
 def cluster(feature_matrix, names):
-    clusters = []
-    for row in xrange(feature_matrix.shape[0]):
-        clusters.append(Cluster(names[row], feature_matrix.getrow(row)))
+    return ClusterByUFS(feature_matrix, names)
 
-    # print [str(c) for c in clusters]
-    numClusters = len(clusters)
-    bestScoreDiff = -1   # Treats ecb and ecb plus different
-    bestScoreSame = -1   # Treats ecb and ecb plus same
-    bestNumClusters = -1
-    bestClusters = []
-    while numClusters > 1:
-        minPair = None
-        minDist = -1
-        for i in xrange(numClusters):
-            for j in xrange(i+1, numClusters):
-                c1 = clusters[i]
-                c2 = clusters[j]
-                dist = c1.distance(c2)
-                if (dist < minDist or minDist == -1):
-                    minDist = dist
-                    minPair = (i, j)
-
-        (i,j) = (minPair[0], minPair[1])
-        clusters[i].combine(clusters[j])
-        clusters = clusters[:j] + clusters[j+1:]
-        numClusters -= 1
-
-        pred = []
-        trueSame = []
-        trueDiff = []
-        cnum = 0
-        names = []
-        for c in clusters:
-            pred += [cnum] * len(c.names)
-            for name in c.names:
-                names.append(name)
-                trueSame.append(int(name.split('_')[0]))
-                if name.endswith('plus.xml'):
-                    trueDiff.append(-1 * int(name.split('_')[0]))
-                else:
-                    trueDiff.append(int(name.split('_')[0]))
-            cnum += 1
-
-        scoreSame = adjusted_rand_score(trueSame, pred)
-        scoreDiff = adjusted_rand_score(trueDiff, pred)
-        logging.debug('Num clusters: %d\t\tScore (same): %.5f\t\tScore (diff): %.5f' % (numClusters, scoreSame, scoreDiff))
-        if  scoreDiff > bestScoreDiff:   # Uses different as the final metric
-            bestScoreSame = scoreSame
-            bestScoreDiff = scoreDiff
-            bestNumClusters = numClusters
-            bestClusters = zip(names, pred)
-    return (bestScoreSame, bestScoreDiff, bestNumClusters, bestClusters)
-
-def writeToFile(bnc, bss, bsd, bc):
+def writeToFile(bnc, bss, bsd, names, bc):
     with open(GRAPH_CLUSTER_OUTPUT, 'w') as f:
         f.write('Best number of clusters: %d\tScore (same): %.5f\tScore (diff): %.5f\n' % (bnc, bss, bsd))
-        for (name, clust) in bc:
+        for (name, clust) in zip(names, bc):
             f.write('%d\t%s\n' % (clust, name))
 
 def main():
@@ -123,7 +72,7 @@ def main():
     logging.debug('Clustering')
     (bss, bsd, bnc, bc) = cluster(feature_matrix, names)
     logging.debug('Writing clusters to file')
-    writeToFile(bss, bsd, bnc, bc)
+    writeToFile(bss, bsd, bnc, names, bc)
 
 if __name__ == '__main__':
     main()
