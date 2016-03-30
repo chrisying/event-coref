@@ -43,7 +43,7 @@ def extractFeatures(graph, eventNodes):
         names.append(node.nodeValue)
         desc = nx.descendants(graph, node)
         for d in desc:
-            if d.nodeType == YAGO_ENTITY or d.nodeType == DB_ENTITY:
+            if d.nodeType == YAGO_ENTITY:
                 index = vocabulary.setdefault(d.nodeValue, len(vocabulary))
 
                 indices.append(index)
@@ -65,7 +65,7 @@ def cluster(feature_matrix, names):
     return ClusterByUFS(feature_matrix, names)
 
 def writeToFile(bss, bsd, bnc, names, bc):
-    with open(GRAPH_CLUSTER_OUTPUT, 'w') as f:
+    with open(BASELINE_GRAPH_CLUSTER_OUTPUT, 'w') as f:
         f.write('Best number of clusters: %d\tScore (same): %.5f\tScore (diff): %.5f\n' % (bnc, bss, bsd))
         for (name, clust) in zip(names, bc):
             f.write('%d\t%s\n' % (clust, name))
