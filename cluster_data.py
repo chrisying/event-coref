@@ -14,7 +14,7 @@ import logging
 
 # Read graph from path
 def deserializeGraph(path):
-    graph = nx.Graph()
+    graph = nx.DiGraph()
     with open(path) as f:
         numEdges = int(f.readline());
         for i in range(numEdges):
@@ -38,26 +38,33 @@ def extractFeatures(graph, eventNodes):
     data = []
     vocabulary = {}
     names = []
+    vc = 0
     for node in eventNodes:
         names.append(node.nodeValue)
-        print 'Creating feature vector for: %s' % node.nodeValue
         desc = nx.descendants(graph, node)
         for d in desc:
             if d.nodeType == YAGO_ENTITY or d.nodeType == DB_ENTITY:
-                print 'Adding feature: %s' % d.nodeValue
                 index = vocabulary.setdefault(d.nodeValue, len(vocabulary))
+
                 indices.append(index)
                 data.append(1)
         indptr.append(len(indices))
 
     feature_matrix = csr_matrix((data, indices, indptr), dtype=int)
+    with open('feature_matrix', 'w') as f:
+        for i in range(feature_matrix.shape[0]):
+            f.write('%s ' % names[i])
+            for b in feature_matrix.getrow(i).toarray()[0]:
+                f.write('%d ' % b)
+            f.write('\n')
+
     return (feature_matrix, names)
 
 # Does basic agglomerative clustering
 def cluster(feature_matrix, names):
     return ClusterByUFS(feature_matrix, names)
 
-def writeToFile(bnc, bss, bsd, names, bc):
+def writeToFile(bss, bsd, bnc, names, bc):
     with open(GRAPH_CLUSTER_OUTPUT, 'w') as f:
         f.write('Best number of clusters: %d\tScore (same): %.5f\tScore (diff): %.5f\n' % (bnc, bss, bsd))
         for (name, clust) in zip(names, bc):

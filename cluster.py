@@ -52,13 +52,12 @@ def ClusterByUFS(feature_matrix, names):
     for name in names:
         n = int(name.split('_')[0])
         true_labels_same.append(n)
-        if name.endswith('plus.xml.txt'):
+        if name.endswith('plus.xml'):
             true_labels_diff.append(-1 * n)
         else:
             true_labels_diff.append(n)
 
     pwd = pairwise_distances(feature_matrix, metric="cosine")
-    print pwd
     edge_distances = []
     for i in xrange(num_rows):
         for j in xrange(i+1, num_rows):
