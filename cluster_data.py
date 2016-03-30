@@ -40,9 +40,11 @@ def extractFeatures(graph, eventNodes):
     names = []
     for node in eventNodes:
         names.append(node.nodeValue)
+        print 'Creating feature vector for: %s' % node.nodeValue
         desc = nx.descendants(graph, node)
         for d in desc:
             if d.nodeType == YAGO_ENTITY or d.nodeType == DB_ENTITY:
+                print 'Adding feature: %s' % d.nodeValue
                 index = vocabulary.setdefault(d.nodeValue, len(vocabulary))
                 indices.append(index)
                 data.append(1)

@@ -7,3 +7,4 @@ dbpedia/*
 output/*
 build/*
 *.out
+constants.py
