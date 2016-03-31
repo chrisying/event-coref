@@ -37,14 +37,22 @@ def extractFeatures(graph, eventNodes):
     indices = []
     data = []
     vocabulary = {}
+    vocab = []
     names = []
     vc = 0
     for node in eventNodes:
         names.append(node.nodeValue)
         desc = nx.descendants(graph, node)
         for d in desc:
-            if d.nodeType == YAGO_ENTITY or d.nodeType == DB_ENTITY:
-                index = vocabulary.setdefault(d.nodeValue, len(vocabulary))
+            #if d.nodeType == YAGO_ENTITY or d.nodeType == DB_ENTITY:
+            if d.nodeType == DB_ENTITY:
+                #index = vocabulary.setdefault(d.nodeValue, len(vocabulary))
+                if d.nodeValue in vocabulary:
+                    index = vocabulary[d.nodeValue]
+                else:
+                    vocabulary[d.nodeValue] = len(vocabulary)
+                    index = vocabulary[d.nodeValue]
+                    vocab.append(d.nodeValue[28:]) #28 = start of entity
 
                 indices.append(index)
                 data.append(1)
@@ -57,6 +65,14 @@ def extractFeatures(graph, eventNodes):
     #        for b in feature_matrix.getrow(i).toarray()[0]:
     #            f.write('%d ' % b)
     #        f.write('\n')
+    with open('db_feature_matrix', 'w') as f:
+        for i in range(feature_matrix.shape[0]):
+            f.write('%s ' % names[i])
+            feats = feature_matrix.getrow(i).toarray()[0]
+            for i in range(len(feats)):
+                if (feats[i] == 1):
+                    f.write('%s ' % vocab[i])
+            f.write('\n')
 
     return (feature_matrix, names)
 
