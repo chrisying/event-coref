@@ -2,9 +2,8 @@
 import networkx as nx
 
 from scipy.sparse import csr_matrix
-from sklearn.cluster import AgglomerativeClustering
-from sklearn.metrics import adjusted_rand_score
-from sklearn.neighbors import kneighbors_graph
+from sklearn.metrics.pairwise import pairwise_distances
+import numpy as np
 
 from constants import *
 from node import Node
@@ -12,92 +11,69 @@ from cluster import ClusterByUFS
 
 import logging
 
-# Read graph from path
-def deserializeGraph(path):
-    graph = nx.DiGraph()
-    with open(path) as f:
-        numEdges = int(f.readline());
-        for i in range(numEdges):
-            line = f.readline().strip()
-            (n1, n2) = eval(line)
-            graph.add_edge(n1, n2)
-    return graph
+def deserializeFeatures():
+    # BOW
+    (names, bm) = makeMatrix(BOW_MATRIX)
 
-# Gets the nodes in the graph corresponding to high-level events (doc)
-def getEventNodes(graph):
-    nodes = []
-    for node in graph.nodes():
-        if node.nodeType == DOC:
-            nodes.append(node)
-    return nodes
+    # YAGO
+    (names, ym) = makeMatrix(YAGO_MATRIX)
 
-# Returns a matrix of features, one row per event
-def extractFeatures(graph, eventNodes):
-    indptr = [0]
-    indices = []
-    data = []
-    vocabulary = {}
-    vocab = []
-    names = []
-    vc = 0
-    for node in eventNodes:
-        names.append(node.nodeValue)
-        desc = nx.descendants(graph, node)
-        for d in desc:
-            #if d.nodeType == YAGO_ENTITY or d.nodeType == DB_ENTITY:
-            if d.nodeType == DB_ENTITY:
-                #index = vocabulary.setdefault(d.nodeValue, len(vocabulary))
-                if d.nodeValue in vocabulary:
-                    index = vocabulary[d.nodeValue]
-                else:
-                    vocabulary[d.nodeValue] = len(vocabulary)
-                    index = vocabulary[d.nodeValue]
-                    vocab.append(d.nodeValue[28:]) #28 = start of entity
+    # DB
+    (names, dm) = makeMatrix(DB_MATRIX)
 
-                indices.append(index)
-                data.append(1)
-        indptr.append(len(indices))
+    return (names, bm, ym, dm)
 
-    feature_matrix = csr_matrix((data, indices, indptr), dtype=int)
-    #with open('graph_feature_matrix', 'w') as f:
-    #    for i in range(feature_matrix.shape[0]):
-    #        f.write('%s ' % names[i])
-    #        for b in feature_matrix.getrow(i).toarray()[0]:
-    #            f.write('%d ' % b)
-    #        f.write('\n')
-    with open('db_feature_matrix', 'w') as f:
-        for i in range(feature_matrix.shape[0]):
-            f.write('%s ' % names[i])
-            feats = feature_matrix.getrow(i).toarray()[0]
-            for i in range(len(feats)):
-                if (feats[i] == 1):
-                    f.write('%s ' % vocab[i])
-            f.write('\n')
+def makeMatrix(filename):
+    with open(filename) as f:
+        indptr = [0]
+        indices = []
+        data = []
+        names = []
+        for line in f.xreadlines():
+            toks = line.split()
+            names.append(toks[0])
+            for i in range(len(toks)-1):
+                b = toks[i+1]
+                if b != 0:
+                    indices.append(i)
+                    data.append(b)
+            indptr.append(len(indices))
+    return (names, csr_matrix((data, indices, indptr), dtype=int))
 
-    return (feature_matrix, names)
-
-# Does basic agglomerative clustering
-def cluster(feature_matrix, names):
-    return ClusterByUFS(feature_matrix, names)
-
-def writeToFile(bss, bsd, bnc, names, bc):
-    with open(GRAPH_CLUSTER_OUTPUT, 'w') as f:
+def writeToFile(bss, bsd, bnc, bc, names, outfile):
+    with open(outfile, 'w') as f:
         f.write('Best number of clusters: %d\tScore (same): %.5f\tScore (diff): %.5f\n' % (bnc, bss, bsd))
         for (name, clust) in zip(names, bc):
             f.write('%d\t%s\n' % (clust, name))
 
 def main():
     logging.basicConfig(level=logging.DEBUG)
-    logging.debug('Deserializing graph')
-    graph = deserializeGraph(GRAPH_OUTPUT)
-    logging.debug('Getting event nodes')
-    eventNodes = getEventNodes(graph)
-    logging.debug('Extracting features')
-    (feature_matrix, names) = extractFeatures(graph, eventNodes)
-    logging.debug('Clustering')
-    (bss, bsd, bnc, bc) = cluster(feature_matrix, names)
-    logging.debug('Writing clusters to file')
-    writeToFile(bss, bsd, bnc, names, bc)
+    logging.debug('Deserializing features')
+    (names, bm, ym, dm) = deserializeFeatures()
+
+    logging.debug('Computing PWD')
+    pwdBOW = pairwise_distances(bm, metric="cosine")
+    pwdYAGO = pairwise_distances(ym, metric="cosine")
+    pwdDB = pairwise_distances(dm, metric="cosine")
+    print pwdBOW
+
+    # Baseline (BOW)
+    logging.debug('Computing B clusters')
+    (bss, bsd, bnc, bc) = ClusterByUFS(pwdBOW, names)
+    writeToFile(bss, bsd, bnc, bc, names, BOW_CLUSTERS)
+
+    # BOW + YAGO
+    logging.debug('Computing BY clusters')
+    pwdBY = np.add(np.multiply(pwdBOW, BOW_CST), np.multiply(pwdYAGO, YAGO_CST))
+    (bss, bsd, bnc, bc) = ClusterByUFS(pwdBY, names)
+    writeToFile(bss, bsd, bnc, bc, names, BOW_YAGO_CLUSTERS)
+
+    # BOW + YAGO + DB
+    logging.debug('Computing BYD clusters')
+    pwdBYD = np.add(np.add(np.multiply(pwdBOW, BOW_CST), np.multiply(pwdYAGO, YAGO_CST)), np.multiply(pwdDB, DB_CST))
+    (bss, bsd, bnc, bc) = ClusterByUFS(pwdBYD, names)
+    writeToFile(bss, bsd, bnc, bc, names, BOW_YAGO_DB_CLUSTERS)
+
 
 if __name__ == '__main__':
     main()
