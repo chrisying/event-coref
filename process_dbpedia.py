@@ -43,7 +43,7 @@ def process_dbpedia(graph):
         for line in f.xreadlines():
             (src, dst) = parseDBpediaYAGO(line) # src is DBpedia URL
             if dst in mapping:
-                print 'Linked YAGO:%s to DB:%s' % (dst, src)
+                #print 'Linked YAGO:%s to DB:%s' % (dst, src)
                 dnode = Node(DB_ENTITY, src)  # May exist already
                 graph.add_node(dnode)
                 graph.add_edge(mapping[dst], dnode)

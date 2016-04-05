@@ -37,7 +37,6 @@ def extractBOWFeatures():
     vocabulary = {}
     names = []
     for filename in os.listdir(ANNOTATION_DIR):
-        print filename
         with open(ANNOTATION_DIR + filename) as f:
             fdata = eval(f.read())
             names.append(filename[:-8]) # Removes .xml.txt
