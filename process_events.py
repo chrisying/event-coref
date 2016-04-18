@@ -13,7 +13,10 @@ def parse_ee_line(line):
     tokens = line.strip().split('\t')
     locs = tuple(map(int, tokens[1].split(',')))
 
-    return tokens[0], locs, tokens[3]
+    if tokens[2] == 'EVENT':
+        return tokens[0], locs, tokens[4]
+    else:
+        return tokens[0], locs, tokens[3]
 
 # Adds entities from file to list
 # Will modify entities list
@@ -26,6 +29,7 @@ def process_entities(fentities, curDoc, entities):
             break
         entityDoc, entityLoc, entity = parse_ee_line(line)
         if entityDoc != curDoc:
+            fentities.seek(pos)
             break
         entities.append((entityLoc, entity))
 
