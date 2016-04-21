@@ -89,6 +89,44 @@ def writeToFile(bs, bnc, bc, bt, names, outfile):
         for (name, clust) in zip(names, bc):
             f.write('%d\t%s\n' % (clust, name))
 
+# Assumes pairsfile exists already, if not copy from events/...mentionpairs
+def writePWD(pwd, names, pairsfile, cl):
+    # faster indexing:
+    namesToIndex = {}
+    i = 0
+    for n in names:
+        namesToIndex[n] = i
+        i += 1
+
+    found = False
+    with open(pairsfile) as f1, open('temp.out', 'w') as f2:
+        for line in f1.xreadlines():
+            toks = line.strip().split('\t')
+            doc = toks[0].split(',')[0]
+            tc = doc.split('_')[0] + 'ecb'
+            if doc[:-4].endswith('plus'):
+                tc += 'plus'
+            if tc != cl:
+                f2.write(line)
+                if found:
+                    break
+                else:
+                    continue
+            found = True
+            d1 = toks[0].split(',')
+            key1 = '%s#%s#%s#%s#%s' % (d1[0], d1[1], d1[2], d1[3], toks[1])
+            d2 = toks[2].split(',')
+            key2 = '%s#%s#%s#%s#%s' % (d2[0], d2[1], d2[2], d2[3], toks[3])
+
+            if key1 not in namesToIndex or key2 not in namesToIndex:
+                print 'WARNING: %s or %s not in data' % (key1, key2)
+                extra = '\tNA\n'
+            else:
+                extra = '\t%.5f\n' % (pwd[namesToIndex[key1], namesToIndex[key2]])
+            f2.write('\t'.join(toks[:5]) + extra)
+
+    os.system('mv temp.out ' + pairsfile)
+
 def main():
     logging.basicConfig(level=logging.DEBUG)
     logging.debug('Getting classes')
@@ -110,8 +148,11 @@ def main():
 
         logging.debug('Computing PWD')
         pwdBOW = pairwise_distances(bm, metric="cosine")
+        writePWD(pwdBOW, names, BOW_CLUSTERS + 'pairs.out', c)
         pwdYAGO = pairwise_distances(ym, metric="cosine")
+        writePWD(pwdYAGO, names, BOW_YAGO_CLUSTERS + 'pairs.out', c)
         pwdDB = pairwise_distances(dm, metric="cosine")
+        writePWD(pwdDB, names, BOW_YAGO_DB_CLUSTERS + 'pairs.out', c)
 
         # Baseline (BOW)
         logging.debug('Computing B clusters')
