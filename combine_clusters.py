@@ -34,7 +34,10 @@ def process_dir(d):
             toks = line.strip().split('\t')
             toks1 = toks[1].split(',')
             key = (toks[0], toks1[0], toks1[1], toks1[2])
-            f2.write('%s\t%s\tEVENT\t%d\t%s\n' % (toks[0], toks[1], eventToCluster[key], toks[4]))
+            if key not in eventToCluster:
+                print 'WARNING: %s not in cluster output' % key
+            else:
+                f2.write('%s\t%s\tEVENT\t%d\t%s\n' % (toks[0], toks[1], eventToCluster[key], toks[4]))
 
 def main():
     process_dir(BOW_CLUSTERS)
