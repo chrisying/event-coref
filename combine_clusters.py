@@ -35,7 +35,7 @@ def process_dir(d):
             toks1 = toks[1].split(',')
             key = (toks[0], toks1[0], toks1[1], toks1[2])
             if key not in eventToCluster:
-                print 'WARNING: %s not in cluster output' % key
+                print 'WARNING: %s not in cluster output' % str(key)
                 f2.write('%s\t%s\tEVENT\tNA\t%s\n' % (toks[0], toks[1], toks[4]))
             else:
                 f2.write('%s\t%s\tEVENT\t%d\t%s\n' % (toks[0], toks[1], eventToCluster[key], toks[4]))
