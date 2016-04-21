@@ -33,6 +33,9 @@ def sentToVec():
 
 def deserializeFeatures(className, sentToVec):
     print 'deserializeFeatures(%s)' % className
+    if (className + '.mat') not in os.listdir(YAGO_MATRICES):
+        print 'Skipping %s class' % className
+        return ([], None, None, None)
 
     # YAGO
     (names, ym) = makeMatrix(YAGO_MATRICES + className + '.mat')
@@ -98,6 +101,9 @@ def main():
 
         logging.debug('Deserializing features')
         (names, bm, ym, dm) = deserializeFeatures(c, s2v)
+        if len(names) == 0:
+            continue
+
         true_labels = []
         for name in names:
             true_labels.append(labelDict[name])

@@ -35,7 +35,11 @@ def getEventNodes(graph):
         if docClass not in nodes:
             nodes[docClass] = []
         docNode = Node(DOC, name)
-        eventNodes = graph.neighbors(docNode)
+        try:
+            eventNodes = graph.neighbors(docNode)
+        except nx.NetworkXError:
+            print '%d document is not in graph'
+            continue
         if len(eventNodes) == 0:
             print 'WARNING: no events for doc %s' % name
         if docClass not in nodes:
