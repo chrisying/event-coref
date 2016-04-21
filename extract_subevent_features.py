@@ -32,13 +32,11 @@ def getEventNodes(graph):
         docClass = name.split('_')[0] + 'ecb'
         if name.endswith('plus.xml'):
             docClass += 'plus'
-        if docClass not in nodes:
-            nodes[docClass] = []
         docNode = Node(DOC, name)
         try:
             eventNodes = graph.neighbors(docNode)
         except nx.NetworkXError:
-            print '%d document is not in graph' % name
+            print '%s document is not in graph' % name
             continue
         if len(eventNodes) == 0:
             print 'WARNING: no events for doc %s' % name
