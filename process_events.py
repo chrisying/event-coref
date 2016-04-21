@@ -88,6 +88,9 @@ def process_doc(graph, doc, events, entities):
             entityPtr += 1
 
         else:
+            for eventNode in eventsBySentence[eventPtr][1]:
+                graph.add_node(eventNode) # Events with no entities
+                graph.add_edge(docNode, eventNode)
             eventPtr += 1
 
 # Reads the data in the appropriate file once and returns a dict of
