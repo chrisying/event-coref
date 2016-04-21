@@ -20,18 +20,19 @@ def parse_ee_line(line):
 
 # Adds entities from file to list
 # Will modify entities list
-# Side note: PYTHON REALLY NEEDS DO-WHILE
-def process_entities(fentities, curDoc, entities):
-    while True:
-        pos = fentities.tell()
-        line = fentities.readline()
-        if not line:
-            break
-        entityDoc, entityLoc, entity = parse_ee_line(line)
-        if entityDoc != curDoc:
-            fentities.seek(pos)
-            break
-        entities.append((entityLoc, entity))
+# THIS IS SUPER INEFFICIENT BECAUSE THE SORTING ORDER FOR EVENTS IS NOT THE SAME AS THAT OF THE ENTITIES
+def process_entities(curDoc, entities):
+    found = False
+    with open(ENTITIES) as f:
+        for line in f.xreadlines():
+            entityDoc, entityLoc, entity = parse_ee_line(line)
+            if entityDoc != curDoc:
+                if found:
+                    break
+                else:
+                    continue
+            found = True
+            entities.append((entityLoc, entity))
 
 # Put doc, events, entities into graph with edges
 def process_doc(graph, doc, events, entities):
@@ -154,7 +155,7 @@ def process_events(graph):
 
             eventDoc, eventLoc, anchor = parse_ee_line(line)
             if eventDoc != curDoc:
-                process_entities(fentities, curDoc, entities)
+                process_entities(curDoc, entities)
                 process_doc(graph, curDoc, events, entities)
                 curDoc = eventDoc
                 events = []
@@ -162,5 +163,5 @@ def process_events(graph):
 
             events.append((eventLoc, anchor))
 
-        process_entities(fentities, curDoc, entities)
+        process_entities(curDoc, entities)
         process_doc(graph, curDoc, events, entities)
