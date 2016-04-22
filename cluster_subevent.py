@@ -43,10 +43,14 @@ def deserializeFeatures(className, sentToVec):
     (names, dm) = makeMatrix(DB_MATRICES + className + '.mat')
 
     mat = []
+    width = len(sentToVec[sentToVec.keys()[0]])
     for name in names:
         toks = name.split('#')
         sent = '%s-%s' % (toks[1], toks[0][:-4])
-        mat.append(sentToVec[sent])
+        if sent in sentToVec:
+            mat.append(sentToVec[sent])
+        else:
+            mat.append([0] * width)
     bm = np.array(mat)
 
     # bm is a dense matrix
