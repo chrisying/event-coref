@@ -46,6 +46,45 @@ def getEventNodes(graph):
     return nodes
 
 # Extract BOW features
+#def extractBOWFeatures():
+#    logging.debug("Extraction BOW features")
+#    indptr = [0]
+#    indices = []
+#    data = []
+#    vocabulary = {}
+#    names = []
+#    for filename in os.listdir(ANNOTATION_DIR):
+#        with open(ANNOTATION_DIR + filename) as f:
+#            docName = filename[:-8] # Removes .xml.txt
+#            fdata = eval(f.read())
+#            breaks = fdata['spaces'] # Hopefully 1 space per word!
+#            breakptr = 1
+#            sentnum = 0
+#            if docName.endswith('plus'):
+#                sentnum += 1 # Offset by the URL in ECBplus docs
+#
+#            # TODO: there is a bug, ECBPLUS is 1-index, ECB is 0-indexed!
+#            for word in fdata['normWords']:
+#                #print 'Sentence %d, Word: %s' % (sentnum, word)
+#                index = vocabulary.setdefault(word, len(vocabulary))
+#                indices.append(index)
+#                data.append(1)
+#                if breaks[breakptr].find('\n') != -1: # last sentence also ends with \n
+#                    names.append(str(sentnum) + '-' + docName)
+#                    indptr.append(len(indices))
+#                    sentnum += 1
+#                breakptr += 1
+#
+#    # TODO: IDF & normalization
+#    feature_matrix = csr_matrix((data, indices, indptr), dtype=int)
+#
+#    with open(BOW_MATRIX, 'w') as f:
+#        for i in range(feature_matrix.shape[0]):
+#            f.write('%s ' % names[i])
+#            for b in feature_matrix.getrow(i).toarray()[0]:
+#                f.write('%d ' % b)
+#            f.write('\n')
+
 def extractBOWFeatures():
     logging.debug("Extraction BOW features")
     indptr = [0]
@@ -53,27 +92,18 @@ def extractBOWFeatures():
     data = []
     vocabulary = {}
     names = []
-    for filename in os.listdir(ANNOTATION_DIR):
-        with open(ANNOTATION_DIR + filename) as f:
-            docName = filename[:-8] # Removes .xml.txt
-            fdata = eval(f.read())
-            breaks = fdata['spaces'] # Hopefully 1 space per word!
-            breakptr = 1
-            sentnum = 0
-            if docName.endswith('plus'):
-                sentnum += 1 # Offset by the URL in ECBplus docs
-
-            # TODO: there is a bug, ECBPLUS is 1-index, ECB is 0-indexed!
-            for word in fdata['normWords']:
-                #print 'Sentence %d, Word: %s' % (sentnum, word)
+    with open(ENTITIES) as f:
+        for line in f.xreadlines():
+            toks = line.strip().split('\t')
+            name = '%s-%s' % (toks[1].split(',')[0], toks[0][:-4])
+            if len(names) == 0 or name != names[-1]:
+                names.append(name)
+                indptr.append(len(indices))
+            for word in toks[3].split(' '):
+                word = word.lower()
                 index = vocabulary.setdefault(word, len(vocabulary))
                 indices.append(index)
                 data.append(1)
-                if breaks[breakptr].find('\n') != -1: # last sentence also ends with \n
-                    names.append(str(sentnum) + '-' + docName)
-                    indptr.append(len(indices))
-                    sentnum += 1
-                breakptr += 1
 
     # TODO: IDF & normalization
     feature_matrix = csr_matrix((data, indices, indptr), dtype=int)
