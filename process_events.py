@@ -61,6 +61,7 @@ def process_doc(graph, doc, events, entities):
     for sentNum in eventsBySentence:
         for event in eventsBySentence[sentNum]:
             graph.add_node(event)
+            graph.add_edge(docNode, event)
         if sentNum in entitiesBySentence:
             for entity in entitiesBySentence[sentNum]:
                 graph.add_node(entity)
