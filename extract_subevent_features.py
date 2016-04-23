@@ -96,7 +96,9 @@ def extractBOWFeatures():
         for line in f.xreadlines():
             toks = line.strip().split('\t')
             name = '%s-%s' % (toks[1].split(',')[0], toks[0][:-4])
-            if len(names) == 0 or name != names[-1]:
+            if len(names) == 0:
+                names.append(name)
+            elif name != names[-1]:
                 names.append(name)
                 indptr.append(len(indices))
             for word in toks[3].split(' '):
@@ -104,6 +106,7 @@ def extractBOWFeatures():
                 index = vocabulary.setdefault(word, len(vocabulary))
                 indices.append(index)
                 data.append(1)
+        indptr.append(len(indices))
 
     # TODO: IDF & normalization
     feature_matrix = csr_matrix((data, indices, indptr), dtype=int)
