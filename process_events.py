@@ -43,55 +43,29 @@ def process_doc(graph, doc, events, entities):
     docNode = Node(DOC, doc)
     graph.add_node(docNode)
 
-    eventsBySentence = []
-    eventSentence = -1
-    eventGroup = []
+    eventsBySentence = {}
     for event in events:
-        if event[0][0] != eventSentence and len(eventGroup) > 0:
-            eventsBySentence.append((eventSentence, eventGroup))
-            eventGroup = []
-            eventSentence = event[0][0]
-        eventGroup.append(Node(EVENT, (doc, event))) # TODO: uid for events
-    eventsBySentence.append((eventSentence, eventGroup))
+        sentNum = event[0][0]
+        if sentNum not in eventsBySentence:
+            eventsBySentence[sentNum] = []
+        eventsBySentence[sentNum].append(Node(EVENT, (doc, event)))
 
-    entitiesBySentence = []
-    entitySentence = -1
-    entityGroup = []
+    entitiesBySentence = {}
     for entity in entities:
-        if entity[0][0] != entitySentence and len(entityGroup) > 0:
-            entitiesBySentence.append((entitySentence, entityGroup))
-            entityGroup = []
-            entitySentence = entity[0][0]
-        entityGroup.append(Node(ENTITY, (doc, entity))) # TODO: uid?
-    entitiesBySentence.append((entitySentence, entityGroup))
+        sentNum = event[0][0]
+        if sentNum not in entitiesBySentence:
+            entitiesBySentence[sentNum] = []
+        entitiesBySentence[sentNum].append(Node(ENTITY, (doc, entity)))
 
     mapping = loadYAGO(doc)  # load appropriate YAGO AIDA file
-    entityPtr = 0
-    eventPtr = 0
-    while entityPtr < len(entitiesBySentence) and eventPtr < len(eventsBySentence):
-        entityS = entitiesBySentence[entityPtr][0]
-        eventS = eventsBySentence[eventPtr][0]
-
-        if entityS == eventS:
-            for entityNode in entitiesBySentence[entityPtr][1]:
-                graph.add_node(entityNode)
-                connectToYAGO(mapping, graph, entityNode) # Link event tagger to YAGO
-            for eventNode in eventsBySentence[eventPtr][1]:
-                graph.add_node(eventNode)
-                graph.add_edge(docNode, eventNode)
-                for entityNode in entitiesBySentence[entityPtr][1]:
-                    graph.add_edge(eventNode, entityNode)
-            entityPtr += 1
-            eventPtr += 1
-
-        elif entityS < eventS:
-            entityPtr += 1
-
-        else:
-            for eventNode in eventsBySentence[eventPtr][1]:
-                graph.add_node(eventNode) # Events with no entities
-                graph.add_edge(docNode, eventNode)
-            eventPtr += 1
+    for sentNum in eventsBySentence:
+        for event in eventsBySentence[sentNum]:
+            graph.add_node(event)
+        if sentNum in entitiesBySentence:
+            for entity in entitiesBySentence[sentNum]:
+                graph.add_node(entity)
+                graph.add_edge(event, entity)
+                connectToYAGO(mapping, graph, entity)
 
 # Reads the data in the appropriate file once and returns a dict of
 # (sentence num, token num) -> YAGO entity
