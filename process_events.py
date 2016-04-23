@@ -52,7 +52,7 @@ def process_doc(graph, doc, events, entities):
 
     entitiesBySentence = {}
     for entity in entities:
-        sentNum = event[0][0]
+        sentNum = entities[0][0]
         if sentNum not in entitiesBySentence:
             entitiesBySentence[sentNum] = []
         entitiesBySentence[sentNum].append(Node(ENTITY, (doc, entity)))
