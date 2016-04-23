@@ -93,7 +93,7 @@ def writeToFile(bs, bnc, bc, bt, names, outfile):
             f.write('%d\t%s\n' % (clust, name))
 
 # Assumes pairsfile exists already, if not copy from events/...mentionpairs
-def writePWD(pwd, names, cl):
+def writePWD(pwd, names, cl, feature_name):
     # faster indexing
     namesToIndex = {}
     i = 0
@@ -119,9 +119,9 @@ def writePWD(pwd, names, cl):
 
             if key1 not in namesToIndex or key2 not in namesToIndex:
                 #print 'WARNING: %s or %s not in data' % (key1, key2)
-                extra = '\tNA\n'
+                extra = '\t%s:NA\n' % feature_name
             else:
-                extra = '\t%.5f\n' % (pwd[namesToIndex[key1], namesToIndex[key2]])
+                extra = '\t%s:%.5f\n' % (feature_name, pwd[namesToIndex[key1], namesToIndex[key2]])
             f2.write(line.strip() + extra)
 
     os.system('mv temp.out output/pairs.out')
@@ -148,11 +148,11 @@ def main():
 
         logging.debug('Computing PWD')
         pwdBOW = pairwise_distances(bm, metric="cosine")
-        writePWD(pwdBOW, names, c)
+        writePWD(pwdBOW, names, c, 'entity_dist')
         pwdYAGO = pairwise_distances(ym, metric="cosine")
-        writePWD(pwdYAGO, names, c)
+        writePWD(pwdYAGO, names, c, 'yago_dist')
         pwdDB = pairwise_distances(dm, metric="cosine")
-        writePWD(pwdDB, names, c)
+        writePWD(pwdDB, names, c, 'db_dist')
 
         ## Baseline (BOW)
         #logging.debug('Computing B clusters')
