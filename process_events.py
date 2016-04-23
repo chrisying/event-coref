@@ -62,11 +62,11 @@ def process_doc(graph, doc, events, entities):
         for event in eventsBySentence[sentNum]:
             graph.add_node(event)
             graph.add_edge(docNode, event)
-        if sentNum in entitiesBySentence:
-            for entity in entitiesBySentence[sentNum]:
-                graph.add_node(entity)
-                graph.add_edge(event, entity)
-                connectToYAGO(mapping, graph, entity)
+            if sentNum in entitiesBySentence:
+                for entity in entitiesBySentence[sentNum]:
+                    graph.add_node(entity)
+                    graph.add_edge(event, entity)
+                    connectToYAGO(mapping, graph, entity)
 
 # Reads the data in the appropriate file once and returns a dict of
 # (sentence num, token num) -> YAGO entity
