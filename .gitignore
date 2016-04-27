@@ -8,3 +8,7 @@ output/*
 build/*
 *.out
 constants.py
+PairwiseClassify
+default.config
+event_mentionpair_model
+test_event_mentionpairs.predict.txt

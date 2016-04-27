@@ -98,10 +98,18 @@ def writePWD(pwd, names, cl, feature_name):
     namesToIndex = {}
     i = 0
     for n in names:
+        n = '#'.join(n.split('#')[:-1])  # remove text
+        if n.endswith('#'):
+            n = n[:-1]
         namesToIndex[n] = i
         i += 1
 
-    with open('output/pairs.out') as f1, open('temp.out', 'w') as f2:
+    if int(cl.split('ecb')[0]) <= 25:
+        pairs_file = 'output/train_pairs.out'
+    else:
+        pairs_file = 'output/test_pairs.out'
+
+    with open(pairs_file) as f1, open('temp.out', 'w') as f2:
         for line in f1.xreadlines():
             toks = line.strip().split('\t')
             doc = toks[0].split(',')[0]
@@ -113,18 +121,18 @@ def writePWD(pwd, names, cl, feature_name):
                 continue
             found = True
             d1 = toks[0].split(',')
-            key1 = '%s#%s#%s#%s#%s' % (d1[0], d1[1], d1[2], d1[3], toks[1])
+            key1 = '%s#%s#%s#%s' % (d1[0], d1[1], d1[2], d1[3])
             d2 = toks[2].split(',')
-            key2 = '%s#%s#%s#%s#%s' % (d2[0], d2[1], d2[2], d2[3], toks[3])
+            key2 = '%s#%s#%s#%s' % (d2[0], d2[1], d2[2], d2[3])
 
             if key1 not in namesToIndex or key2 not in namesToIndex:
-                #print 'WARNING: %s or %s not in data' % (key1, key2)
-                extra = '\t%s:NA\n' % feature_name
+                print 'WARNING: %s or %s not in data' % (key1, key2)
+                extra = '\n' # Don't write anything
             else:
-                extra = '\t%s:%.5f\n' % (feature_name, pwd[namesToIndex[key1], namesToIndex[key2]])
-            f2.write(line.strip() + extra)
+                extra = '%s:%.5f \n' % (feature_name, 1.0-pwd[namesToIndex[key1], namesToIndex[key2]])
+            f2.write(line[:-1] + extra)
 
-    os.system('mv temp.out output/pairs.out')
+    os.system('mv temp.out ' + pairs_file)
 
 def main():
     logging.basicConfig(level=logging.DEBUG)
@@ -132,7 +140,8 @@ def main():
     classes = getClasses();
     labelDict = getTrueLabels()
     s2v = sentToVec()
-    os.system('cp ' + PAIRS + ' output/pairs.out')
+    os.system('cp ' + TRAIN_PAIRS + ' output/train_pairs.out')
+    os.system('cp ' + TEST_PAIRS + ' output/test_pairs.out')
 
     for c in classes:
         logging.debug('----ANALYZING %s----' % c)
@@ -147,8 +156,8 @@ def main():
             true_labels.append(labelDict[name])
 
         logging.debug('Computing PWD')
-        pwdBOW = pairwise_distances(bm, metric="cosine")
-        writePWD(pwdBOW, names, c, 'entity_dist')
+        #pwdBOW = pairwise_distances(bm, metric="cosine")
+        #writePWD(pwdBOW, names, c, 'entity_dist')
         pwdYAGO = pairwise_distances(ym, metric="cosine")
         writePWD(pwdYAGO, names, c, 'yago_dist')
         pwdDB = pairwise_distances(dm, metric="cosine")
