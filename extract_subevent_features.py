@@ -2,6 +2,7 @@
 
 import networkx as nx
 from scipy.sparse import csr_matrix
+import numpy as np
 
 import os
 import logging
@@ -108,14 +109,21 @@ def extractBOWFeatures():
                 data.append(1)
         indptr.append(len(indices))
 
-    # TODO: IDF & normalization
     feature_matrix = csr_matrix((data, indices, indptr), dtype=int)
 
+    # IDF
+    df = [0] * len(vocabulary)
+    rows = feature_matrix.shape[0]
+    for row in range(rows):
+        for idx in feature_matrix.getrow(row).nonzero()[1]:
+            df[idx] += 1
+
     with open(BOW_MATRIX, 'w') as f:
-        for i in range(feature_matrix.shape[0]):
+        for i in range(rows):
             f.write('%s ' % names[i])
             for b in feature_matrix.getrow(i).toarray()[0]:
-                f.write('%d ' % b)
+                score = b * np.log(float(rows) / df[idx])
+                f.write('%.5f ' % score)
             f.write('\n')
 
 # Extract YAGO features
@@ -136,14 +144,21 @@ def extractYAGOFeatures(graph, eventNodes, docClass):
                 data.append(1)
         indptr.append(len(indices))
 
-    # TODO: weighting
     feature_matrix = csr_matrix((data, indices, indptr), dtype=int)
 
+    # IDF
+    df = [0] * len(vocabulary)
+    rows = feature_matrix.shape[0]
+    for row in range(rows):
+        for idx in feature_matrix.getrow(row).nonzero()[1]:
+            df[idx] += 1
+
     with open(YAGO_MATRICES + docClass + '.mat', 'w') as f:
-        for i in range(feature_matrix.shape[0]):
+        for i in range(rows):
             f.write('%s ' % names[i])
             for b in feature_matrix.getrow(i).toarray()[0]:
-                f.write('%d ' % b)
+                score = b * np.log(float(rows) / df[idx])
+                f.write('%.5f ' % score)
             f.write('\n')
 
 # Extract DB features
@@ -164,14 +179,21 @@ def extractDBFeatures(graph, eventNodes, docClass):
                 data.append(1)
         indptr.append(len(indices))
 
-    # TODO: weighting
     feature_matrix = csr_matrix((data, indices, indptr), dtype=int)
 
+    # IDF
+    df = [0] * len(vocabulary)
+    rows = feature_matrix.shape[0]
+    for row in range(rows):
+        for idx in feature_matrix.getrow(row).nonzero()[1]:
+            df[idx] += 1
+
     with open(DB_MATRICES + docClass + '.mat', 'w') as f:
-        for i in range(feature_matrix.shape[0]):
+        for i in range(rows):
             f.write('%s ' % names[i])
             for b in feature_matrix.getrow(i).toarray()[0]:
-                f.write('%d ' % b)
+                score = b * np.log(float(rows) / df[idx])
+                f.write('%.5f ' % score)
             f.write('\n')
 
 def main():
