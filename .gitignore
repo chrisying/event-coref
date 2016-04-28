@@ -9,6 +9,7 @@ build/*
 *.out
 constants.py
 PairwiseClassify
+CoreferenceSystem
 default.config
 event_mentionpair_model
 test_event_mentionpairs.predict.txt

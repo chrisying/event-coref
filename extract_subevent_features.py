@@ -87,7 +87,7 @@ def getEventNodes(graph):
 #            f.write('\n')
 
 def extractBOWFeatures():
-    logging.debug("Extraction BOW features")
+    logging.debug("Extracting BOW features")
     indptr = [0]
     indices = []
     data = []
@@ -112,18 +112,19 @@ def extractBOWFeatures():
     feature_matrix = csr_matrix((data, indices, indptr), dtype=int)
 
     # IDF
-    df = [0] * len(vocabulary)
+    #df = [0] * len(vocabulary)
     rows = feature_matrix.shape[0]
-    for row in range(rows):
-        for idx in feature_matrix.getrow(row).nonzero()[1]:
-            df[idx] += 1
+    #for row in range(rows):
+    #    for idx in feature_matrix.getrow(row).nonzero()[1]:
+    #        df[idx] += 1
 
     with open(BOW_MATRIX, 'w') as f:
         for i in range(rows):
             f.write('%s ' % names[i])
             for b in feature_matrix.getrow(i).toarray()[0]:
-                score = b * np.log(float(rows) / df[idx])
-                f.write('%.5f ' % score)
+                #score = b * np.log((float(rows) + 1.0) / df[idx])
+                #f.write('%.5f ' % score)
+                f.write('%d ' % b)
             f.write('\n')
 
 # Extract YAGO features
@@ -139,26 +140,44 @@ def extractYAGOFeatures(graph, eventNodes, docClass):
         desc = nx.descendants(graph, node)
         for d in desc:
             if d.nodeType == YAGO_ENTITY:
+
+                # TFIDF-like effect
+                tf = 0 # number of times it shows up in THIS docClass (i.e. num events in this class)
+                df = 0 # number of times it shows up in ANY docClass (i.e. num events in any class)
+                anc = nx.ancestors(graph, d)
+                for a in anc:
+                    if a.nodeType == EVENT:
+                        df += 1
+                        aName = a.nodeValue[0][:-4]
+                        aClass = aName.split('_')[0] + 'ecb'
+                        if aName.endswith('plus'):
+                            aClass += 'plus'
+
+                        if aClass == docClass:
+                            tf += 1
+                score = float(tf) * np.log(float(NUM_EVENTS) / df)
+
                 index = vocabulary.setdefault(d.nodeValue, len(vocabulary))
                 indices.append(index)
-                data.append(1)
+                data.append(score)
         indptr.append(len(indices))
 
-    feature_matrix = csr_matrix((data, indices, indptr), dtype=int)
+    feature_matrix = csr_matrix((data, indices, indptr), dtype=float)
 
     # IDF
-    df = [0] * len(vocabulary)
+    #df = [0] * len(vocabulary)
     rows = feature_matrix.shape[0]
-    for row in range(rows):
-        for idx in feature_matrix.getrow(row).nonzero()[1]:
-            df[idx] += 1
+    #for row in range(rows):
+    #    for idx in feature_matrix.getrow(row).nonzero()[1]:
+    #        df[idx] += 1
 
     with open(YAGO_MATRICES + docClass + '.mat', 'w') as f:
         for i in range(rows):
             f.write('%s ' % names[i])
             for b in feature_matrix.getrow(i).toarray()[0]:
-                score = b * np.log(float(rows) / df[idx])
-                f.write('%.5f ' % score)
+                #score = b * np.log((float(rows) + 1.0) / df[idx])
+                #f.write('%.5f ' % score)
+                f.write('%.5f ' % b)
             f.write('\n')
 
 # Extract DB features
@@ -182,18 +201,19 @@ def extractDBFeatures(graph, eventNodes, docClass):
     feature_matrix = csr_matrix((data, indices, indptr), dtype=int)
 
     # IDF
-    df = [0] * len(vocabulary)
+    #df = [0] * len(vocabulary)
     rows = feature_matrix.shape[0]
-    for row in range(rows):
-        for idx in feature_matrix.getrow(row).nonzero()[1]:
-            df[idx] += 1
+    #for row in range(rows):
+    #    for idx in feature_matrix.getrow(row).nonzero()[1]:
+    #        df[idx] += 1
 
     with open(DB_MATRICES + docClass + '.mat', 'w') as f:
         for i in range(rows):
             f.write('%s ' % names[i])
             for b in feature_matrix.getrow(i).toarray()[0]:
-                score = b * np.log(float(rows) / df[idx])
-                f.write('%.5f ' % score)
+                #score = b * np.log((float(rows) + 1.0) / df[idx])
+                #f.write('%.5f ' % score)
+                f.write('%d ' % b)
             f.write('\n')
 
 def main():

@@ -27,7 +27,7 @@ def sentToVec():
     with open(BOW_MATRIX) as f:
         for line in f.xreadlines():
             name = line.split(' ')[0]
-            vec = map(int, line.strip().split(' ')[1:])
+            vec = map(float, line.strip().split(' ')[1:])
             sdict[name] = vec
     return sdict
 
@@ -66,12 +66,12 @@ def makeMatrix(filename):
             toks = line.split()
             names.append(toks[0])
             for i in range(len(toks)-1):
-                b = toks[i+1]
-                if b != 0:
+                b = float(toks[i+1])
+                if b != 0.0:
                     indices.append(i)
                     data.append(b)
             indptr.append(len(indices))
-    return (names, csr_matrix((data, indices, indptr), dtype=int))
+    return (names, csr_matrix((data, indices, indptr), shape=(len(indptr)-1, len(toks)-1), dtype=float))
 
 def getTrueLabels():
     # names in form of 'doc.xml#sent#start#end#word'
