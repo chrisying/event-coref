@@ -155,7 +155,8 @@ def extractYAGOFeatures(graph, eventNodes, docClass):
 
                         if aClass == docClass:
                             tf += 1
-                score = float(tf) * np.log(float(NUM_EVENTS) / df)
+                #score = float(tf) * np.log(float(NUM_EVENTS) / df)
+                score = np.log(float(NUM_EVENTS) / df)
 
                 index = vocabulary.setdefault(d.nodeValue, len(vocabulary))
                 indices.append(index)
@@ -193,12 +194,28 @@ def extractDBFeatures(graph, eventNodes, docClass):
         desc = nx.descendants(graph, node)
         for d in desc:
             if d.nodeType == DB_ENTITY:
+                # TFIDF-like effect
+                tf = 0 # number of times it shows up in THIS docClass (i.e. num events in this class)
+                df = 0 # number of times it shows up in ANY docClass (i.e. num events in any class)
+                anc = nx.ancestors(graph, d)
+                for a in anc:
+                    if a.nodeType == EVENT:
+                        df += 1
+                        aName = a.nodeValue[0][:-4]
+                        aClass = aName.split('_')[0] + 'ecb'
+                        if aName.endswith('plus'):
+                            aClass += 'plus'
+
+                        if aClass == docClass:
+                            tf += 1
+                #score = float(tf) * np.log(float(NUM_EVENTS) / df)
+                score = np.log(float(NUM_EVENTS) / df) # IDF only
                 index = vocabulary.setdefault(d.nodeValue, len(vocabulary))
                 indices.append(index)
-                data.append(1)
+                data.append(score)
         indptr.append(len(indices))
 
-    feature_matrix = csr_matrix((data, indices, indptr), dtype=int)
+    feature_matrix = csr_matrix((data, indices, indptr), dtype=float)
 
     # IDF
     #df = [0] * len(vocabulary)
@@ -213,7 +230,7 @@ def extractDBFeatures(graph, eventNodes, docClass):
             for b in feature_matrix.getrow(i).toarray()[0]:
                 #score = b * np.log((float(rows) + 1.0) / df[idx])
                 #f.write('%.5f ' % score)
-                f.write('%d ' % b)
+                f.write('%.5f ' % b)
             f.write('\n')
 
 def main():
