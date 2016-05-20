@@ -1,5 +1,18 @@
-# Main code for parsing all the event tagger, YAGO, DBpedia data into a
-# single networkx graph
+'''
+Main code for parsing all the event tagger, YAGO, DBpedia data into a
+single networkx graph. Calls process_events.py and process_dbpedia.py.
+
+Expected constants defined:
+    EVENTS: name of events file
+    ENTITIES: name of entities file
+    ECB_YAGO: name of folder containing ECB JSON files (which have YAGO labels)
+    YAGO_DBPEDIA: name of YAGO-DBpedia links file
+    DBPEDIA_PREFIX: 'http://dbpedia.org'
+    GRAPH_OUTPUT: name of output networkx graph file
+
+Output graph is serialized as a set of nodes and edges in a form that can
+be directly parsed using Python eval.
+'''
 
 import json
 import logging

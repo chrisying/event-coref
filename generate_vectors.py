@@ -1,3 +1,13 @@
+'''
+Generates the feature vectors used by logistic regression to pairwise classify events as coreferencing or not.
+
+Expected constants defined (includes any previously defined constants):
+    TRAIN_PAIRS: file containing all pairs of events to be used for training
+    TEST_PAIRS: file containing all pairs of events to be used for testing
+
+Writes to output/train_pairs.out and output/test_pairs.out which can be passed directly into the logistic regression classifier.
+'''
+
 import networkx as nx
 
 from scipy.sparse import csr_matrix

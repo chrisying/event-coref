@@ -1,3 +1,17 @@
+'''
+Extracts a set of feature vectors for every single document.
+
+Expected constants defined:
+    GRAPH_OUTPUT: Text-KB graph from parse_data.py
+    ANNOTATION_DIR: name of directory containing annotated ECB files
+        (this was originally used for bag-of-words features but now is just used for the document classes)
+    BOW_MATRIX: name of output file for BOW features
+    YAGO_MATRIX: name of output file for YAGO features
+    DB_MATRIX: name of output file for DBpedia features
+
+Outputs are matrices written in dense form in the specified locations.
+'''
+
 import networkx as nx
 from scipy.sparse import csr_matrix
 

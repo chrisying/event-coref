@@ -1,3 +1,8 @@
+'''
+Generates some basic metrics about the pairwise corefence methods. Should be run after generating all predicted data using different combinations of features.
+
+This script was used to generate the final results showed in the poster.
+'''
 
 BASELINE_FILE = 'predicted_baseline.out'
 BOW_FILE = 'predicted_bow.out'

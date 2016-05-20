@@ -1,4 +1,9 @@
-# WARNING: this code uses eval, make sure you trust GRAPH_OUTPUT
+'''
+Clusters the documents using the feature matrices previously generated in extract_features.py.
+
+OLD code, see cluster_subevent.py for the code that clusters events.
+'''
+
 import networkx as nx
 
 from scipy.sparse import csr_matrix

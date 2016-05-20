@@ -1,4 +1,16 @@
-# Extracts a set of feature vectors for every single doc class (ex: 1_*ecb.xml)
+'''
+Extracts a set of feature vectors for every single doc class (ex: 1_*ecb.xml). Requires the Text-KB graph to be generated first. This differs from extract_features.py in that the matrices are generated for each class (so they are much smaller in dimension) and assumes that we know the document class (aka we know the topics).
+
+Expected constants defined:
+    GRAPH_OUTPUT: Text-KB graph from parse_data.py
+    ANNOTATION_DIR: name of directory containing annotated ECB files
+        (this was originally used for bag-of-words features but now is just used for the document classes)
+    BOW_MATRIX: name of output file for BOW features
+    YAGO_MATRICES: name of directory containing YAGO features
+    DB_MATRICES: name of directory containing DBpedia features
+
+Output is a set of matrices written in dense form in the specified locations.
+'''
 
 import networkx as nx
 from scipy.sparse import csr_matrix
