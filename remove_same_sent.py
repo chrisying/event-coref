@@ -1,3 +1,4 @@
+# Removes pairs in the same sentence (ended up being not useful)
 
 import os
 from constants import *

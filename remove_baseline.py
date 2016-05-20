@@ -1,3 +1,4 @@
+# Removes all features in the baseline pairwise clustering except head_match
 
 import os
 from constants import *

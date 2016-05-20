@@ -1,3 +1,5 @@
+# Clustering using min-linkage, implemented using Kruskal's algorithm
+
 import copy
 
 import numpy as np

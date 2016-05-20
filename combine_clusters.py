@@ -1,4 +1,4 @@
-
+# Combines subevent clustering over all document classes to generate summary metrics
 
 import os
 from constants import *

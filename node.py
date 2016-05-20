@@ -1,4 +1,3 @@
-
 # Node that will be in the networkx graph
 class Node:
 

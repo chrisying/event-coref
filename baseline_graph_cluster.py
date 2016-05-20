@@ -1,4 +1,5 @@
-# WARNING: this code uses eval, make sure you trust GRAPH_OUTPUT
+# Baseline clustering using the shallow features in the Text-KB graph
+
 import networkx as nx
 
 from scipy.sparse import csr_matrix
